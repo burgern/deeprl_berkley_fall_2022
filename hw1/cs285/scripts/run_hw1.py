@@ -52,6 +52,9 @@ class BC_Trainer(object):
             expert_policy=self.loaded_expert_policy,
         )
 
+    def perform_expert_eval(self):
+        self.rl_trainer.perform_logging_expert_eval(self.loaded_expert_policy)
+
 
 def main():
     import argparse
@@ -118,6 +121,7 @@ def main():
 
     trainer = BC_Trainer(params)
     trainer.run_training_loop()
+    trainer.perform_expert_eval()
 
 if __name__ == "__main__":
     main()
