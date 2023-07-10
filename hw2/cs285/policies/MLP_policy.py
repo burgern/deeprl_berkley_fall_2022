@@ -10,6 +10,7 @@ from torch import distributions
 
 from cs285.infrastructure import pytorch_util as ptu
 from cs285.policies.base_policy import BasePolicy
+from cs285.infrastructure.utils import normalize
 
 
 class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
@@ -92,8 +93,8 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         else:
             observation = obs[None]
 
-        action = self.forward(torch.from_numpy(observation).float().to(ptu.device))
-        return action.detach().cpu().numpy()
+        action = self.forward(ptu.from_numpy(observation))
+        return ptu.to_numpy(action.sample())
 
     # update/train this policy
     def update(self, observations, actions, **kwargs):
@@ -141,8 +142,14 @@ class MLPPolicyPG(MLPPolicy):
         # HINT2: you will want to use the `log_prob` method on the distribution returned
             # by the `forward` method
 
-        TODO
+        action_probs = self.forward(observations)
+        loss = -torch.mean(action_probs.log_prob(actions) * advantages)
 
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        baseline_loss = None
         if self.nn_baseline:
             ## TODO: update the neural network baseline using the q_values as
             ## targets. The q_values should first be normalized to have a mean
@@ -151,10 +158,17 @@ class MLPPolicyPG(MLPPolicy):
             ## Note: You will need to convert the targets into a tensor using
                 ## ptu.from_numpy before using it in the loss
 
-            TODO
+            target = ptu.from_numpy(normalize(q_values, 0, 1))
+            pred = self.baseline(observations)
+            baseline_loss = self.baseline_loss(pred, target)
+
+            self.baseline_optimizer.zero_grad()
+            baseline_loss.backward()
+            self.baseline_optimizer.step()
 
         train_log = {
             'Training Loss': ptu.to_numpy(loss),
+            'Baseline Loss': ptu.to_numpy(baseline_loss) if baseline_loss is not None else "N/A",
         }
         return train_log
 

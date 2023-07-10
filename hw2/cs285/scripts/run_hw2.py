@@ -4,6 +4,10 @@ import time
 from cs285.infrastructure.rl_trainer import RL_Trainer
 from cs285.agents.pg_agent import PGAgent
 
+import torch
+torch.cuda.empty_cache()
+
+
 class PG_Trainer(object):
 
     def __init__(self, params):

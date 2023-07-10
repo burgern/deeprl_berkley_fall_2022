@@ -55,7 +55,6 @@ def mean_squared_error(a, b):
 ############################################
 
 def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('rgb_array')):
-    # TODO: get this from hw1
     # initialize env for the beginning of a new rollout
     ob = env.reset()  # HINT: should be the output of resetting the env
 
